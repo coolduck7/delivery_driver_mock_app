@@ -1,534 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RiderHub — Driver</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          colors: {
-            ink: '#0a0e0c',
-            panel: '#13181550',
-            brand: '#1fd65f',
-            brandDim: '#15b04e',
-          },
-          keyframes: {
-            slideUp: { '0%': { transform: 'translateY(100%)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-            popIn: { '0%': { transform: 'scale(0.92)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
-            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-            pulseRing: { '0%,100%': { opacity: '1' }, '50%': { opacity: '0.45' } },
-            toastIn: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-          },
-          animation: {
-            slideUp: 'slideUp 0.32s cubic-bezier(0.16,1,0.3,1)',
-            popIn: 'popIn 0.25s cubic-bezier(0.16,1,0.3,1)',
-            fadeIn: 'fadeIn 0.25s ease-out',
-            pulseRing: 'pulseRing 1.4s ease-in-out infinite',
-            toastIn: 'toastIn 0.3s cubic-bezier(0.16,1,0.3,1)',
-          },
-        },
-      },
-    };
-  </script>
-  <style>
-    html, body { background: #050706; margin: 0; }
-    * { -webkit-tap-highlight-color: transparent; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .phone-shadow { box-shadow: 0 40px 120px -20px rgba(31,214,95,0.18), 0 30px 80px -30px rgba(0,0,0,0.9); }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#050706" />
+<title>RiderHub — Driver</title>
+<style>
+  :root{
+    --ink:#0a0e0c; --brand:#1fd65f; --brand-dim:#15b04e;
+    --bg:#050706; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.07);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(circle at 50% 0%, #0c1410 0%, #050706 60%)}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .tabular{font-variant-numeric:tabular-nums}
+
+  /* ---------- phone frame ---------- */
+  .wrap{width:100%;max-width:400px}
+  .frame{position:relative;border-radius:2.6rem;background:#000;padding:10px;border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 40px 120px -20px rgba(31,214,95,.18),0 30px 80px -30px rgba(0,0,0,.9)}
+  .screen{position:relative;border-radius:2.1rem;overflow:hidden;background:var(--ink);height:min(840px,88vh);display:flex;flex-direction:column}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:24px;background:#000;border-radius:0 0 16px 16px;z-index:30}
+  .home-ind{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:112px;height:4px;background:rgba(255,255,255,.25);border-radius:99px;z-index:40}
+
+  /* ---------- status bar ---------- */
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 4px;color:#fff;font-size:13px;font-weight:600;user-select:none}
+  .statusbar .icons{display:flex;align-items:center;gap:6px}
+  .batt{display:flex;align-items:center;gap:2px}
+  .batt .shell{width:24px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.8);padding:1.5px}
+  .batt .lvl{height:100%;background:#fff;border-radius:1px;width:78%}
+  .batt .tip{width:2px;height:6px;background:rgba(255,255,255,.8);border-radius:99px}
+
+  /* ---------- header ---------- */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 12px;background:rgba(10,14,12,.95);backdrop-filter:blur(8px);position:relative;z-index:20;border-bottom:1px solid rgba(255,255,255,.05)}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .mark{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-dim));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(31,214,95,.5)}
+  .logo .name{font-weight:800;font-size:18px;letter-spacing:-.02em;color:#fff;line-height:1}
+  .logo .name b{color:var(--brand);font-weight:800}
+  .logo .sub{font-size:10px;color:rgba(255,255,255,.4);font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+  .pill{display:flex;align-items:center;gap:8px;background:rgba(31,214,95,.1);border:1px solid rgba(31,214,95,.3);border-radius:99px;padding:6px 14px 6px 10px}
+  .pill .dot{position:relative;width:10px;height:10px}
+  .pill .dot .ping{position:absolute;inset:0;border-radius:99px;background:var(--brand);animation:pulse 1.4s ease-in-out infinite}
+  .pill .dot .core{position:absolute;inset:0;border-radius:99px;background:var(--brand)}
+  .pill span{color:var(--brand);font-size:13px;font-weight:700;letter-spacing:.02em}
+
+  /* ---------- scroll area ---------- */
+  .scroll{flex:1;overflow-y:auto;padding-top:14px;padding-bottom:14px;-ms-overflow-style:none;scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+  .page{padding:0 16px;display:flex;flex-direction:column;gap:14px}
+  .hidden{display:none !important}
+
+  /* ---------- cards ---------- */
+  .card{border-radius:16px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+  .card-title{color:#fff;font-weight:700;font-size:15px}
+  .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px}
+  .badge.green{color:var(--brand);background:rgba(31,214,95,.1)}
+  .badge.gray{color:rgba(255,255,255,.4);background:rgba(255,255,255,.05)}
+
+  /* new order */
+  .req-head{background:rgba(31,214,95,.07)}
+  .req-body{padding:12px 16px}
+  .req-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+  .req-rest{color:#fff;font-weight:800;font-size:17px;line-height:1.15}
+  .req-drop{color:rgba(255,255,255,.45);font-size:13px;margin-top:3px;display:flex;align-items:center;gap:6px}
+  .req-pay{text-align:right}
+  .req-pay .amt{color:var(--brand);font-weight:800;font-size:24px;line-height:1}
+  .req-pay .lbl{color:rgba(255,255,255,.4);font-size:11px;margin-top:4px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .stat-mini{border-radius:12px;background:rgba(255,255,255,.04);padding:8px 12px;display:flex;align-items:center;gap:8px}
+  .stat-mini .v{color:#fff;font-weight:700;font-size:14px}
+  .stat-mini .l{color:rgba(255,255,255,.4);font-size:10px}
+  .btn-row{display:flex;gap:10px;margin-top:14px}
+  .btn{border-radius:12px;font-weight:700;font-size:15px;padding:12px;transition:transform .1s;text-align:center}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--brand);color:var(--ink);font-weight:800;box-shadow:0 10px 24px -8px rgba(31,214,95,.5)}
+  .btn-ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.08)}
+  .flex1{flex:1}.flex16{flex:1.6}.flex14{flex:1.4}
+  .inline-msg{padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500}
+
+  /* earnings */
+  .earn{position:relative}
+  .earn::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(31,214,95,.1),transparent 60%);pointer-events:none}
+  .earn-in{padding:16px 20px;position:relative}
+  .earn-row{display:flex;align-items:center;justify-content:space-between}
+  .earn-cap{color:rgba(255,255,255,.55);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .earn-big{display:flex;align-items:flex-end;gap:4px;margin-top:4px}
+  .earn-big .cur{color:rgba(255,255,255,.6);font-weight:700;font-size:24px;margin-bottom:6px}
+  .earn-big .num{color:#fff;font-weight:900;font-size:64px;line-height:.85;letter-spacing:-.02em}
+  .earn-sub{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .earn-box{border-radius:12px;background:rgba(0,0,0,.2);padding:10px 14px}
+  .earn-box .t{color:rgba(255,255,255,.45);font-size:11px;font-weight:500;display:flex;align-items:center;gap:6px}
+  .earn-box .b{color:#fff;font-weight:700;font-size:16px;margin-top:4px}
+
+  /* current order route */
+  .route{display:flex;gap:12px}
+  .route .line{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+  .route .d1{width:10px;height:10px;border-radius:99px;background:var(--brand)}
+  .route .bar{width:2px;flex:1;background:linear-gradient(to bottom,rgba(31,214,95,.6),rgba(255,255,255,.15));margin:4px 0}
+  .route .d2{width:10px;height:10px;border-radius:99px;border:2px solid rgba(255,255,255,.4)}
+  .route .info{flex:1;display:flex;flex-direction:column;gap:12px}
+  .route .lbl{color:rgba(255,255,255,.4);font-size:11px;font-weight:500}
+  .route .val{color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+  .timer{margin-top:12px;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border:1px solid}
+  .timer.amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35)}
+  .timer.red{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4)}
+  .timer .left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+  .timer.amber .left,.timer.amber .clock{color:#fbbf24}
+  .timer.red .left,.timer.red .clock{color:#f87171}
+  .timer .clock{font-weight:900;font-size:18px}
+  .btn-done-off{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3)}
+  .footer-note{text-align:center;color:rgba(255,255,255,.25);font-size:11px;padding:4px 0 8px}
+
+  /* ---------- toast ---------- */
+  .toast{position:absolute;bottom:88px;left:50%;transform:translateX(-50%);z-index:40;max-width:88%}
+  .toast .inner{background:#fff;color:var(--ink);font-weight:700;font-size:13px;padding:10px 16px;border-radius:99px;box-shadow:0 20px 40px -10px rgba(0,0,0,.6);display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .toast.show{animation:toastIn .3s cubic-bezier(.16,1,.3,1)}
+
+  /* ---------- bottom nav ---------- */
+  .nav{position:absolute;bottom:0;left:0;right:0;background:rgba(10,14,12,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:10px 24px 20px;display:flex;z-index:30}
+  .nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .1s}
+  .nav button:active{transform:scale(.95)}
+  .nav .lab{font-size:11px;font-weight:600;color:rgba(255,255,255,.35)}
+  .nav button.active .lab{color:var(--brand)}
+  .nav .ico{color:rgba(255,255,255,.35)}
+  .nav button.active .ico{color:var(--brand)}
+
+  /* ---------- modals ---------- */
+  .overlay{position:absolute;inset:0;z-index:50;display:flex;background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+  .overlay.sheet{align-items:flex-end;justify-content:center}
+  .overlay.center{align-items:center;justify-content:center;padding:0 24px}
+  .overlay.fade{animation:fade .25s ease-out}
+  .sheet-card{position:relative;width:100%;background:#15110f;border-top:1px solid rgba(239,68,68,.3);border-left:1px solid rgba(239,68,68,.3);border-right:1px solid rgba(239,68,68,.3);border-radius:24px 24px 0 0;padding:20px 20px 28px;animation:slideUp .32s cubic-bezier(.16,1,.3,1)}
+  .grab{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:99px;margin:0 auto 16px}
+  .sheet-icon{width:56px;height:56px;border-radius:16px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+  .col-center{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .sheet-title{color:#fff;font-weight:800;font-size:20px}
+  .sheet-warn{color:rgba(252,165,165,.95);font-weight:700;font-size:15px;margin-top:8px;display:flex;align-items:center;gap:6px}
+  .sheet-desc{color:rgba(255,255,255,.45);font-size:13px;margin-top:8px;line-height:1.5}
+  .btn-danger{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+
+  .pop-card{position:relative;width:100%;max-width:340px;background:linear-gradient(to bottom,#0e1a12,#0b0f0c);border:1px solid rgba(31,214,95,.3);border-radius:24px;padding:24px;text-align:center;animation:popIn .25s cubic-bezier(.16,1,.3,1);box-shadow:0 30px 60px -15px rgba(31,214,95,.25)}
+  .pop-icon{width:64px;height:64px;border-radius:99px;background:rgba(31,214,95,.15);border:1px solid rgba(31,214,95,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .pop-title{color:#fff;font-weight:800;font-size:20px}
+  .pop-sub{color:rgba(255,255,255,.5);font-size:13px;margin-top:4px}
+  .pop-amt{display:flex;align-items:flex-end;justify-content:center;gap:4px;margin-top:12px}
+  .pop-amt .cur{color:rgba(255,255,255,.6);font-weight:700;font-size:20px;margin-bottom:4px}
+  .pop-amt .num{color:var(--brand);font-weight:900;font-size:48px;line-height:.85}
+  .pop-tag{margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:rgba(31,214,95,.8);background:rgba(31,214,95,.1);border-radius:99px;padding:6px 12px}
+
+  /* ---------- rankings ---------- */
+  .rank-hero{position:relative}
+  .rank-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,158,11,.07),transparent 60%);pointer-events:none}
+  .rank-in{padding:20px;position:relative}
+  .rank-cap{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .rank-cap svg{color:#fbbf24}
+  .rank-num{color:#fff;font-weight:900;font-size:48px;line-height:1;margin-top:8px}
+  .rank-of{color:rgba(255,255,255,.5);font-size:14px;margin-top:8px;font-weight:500}
+  .rank-of b{color:#fff;font-weight:700}
+  .meter-labels{display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:rgba(255,255,255,.35);margin-bottom:6px}
+  .meter{position:relative;height:12px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+  .meter .grad{position:absolute;inset:0;background:linear-gradient(to right,rgba(239,68,68,.3),rgba(245,158,11,.3),rgba(31,214,95,.3))}
+  .meter .fill{height:100%;border-radius:99px;background:linear-gradient(to right,#fbbf24,#f59e0b);width:0;transition:width 1s cubic-bezier(.16,1,.3,1)}
+  .meter-knob{position:absolute;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:99px;background:#fff;border:2px solid #f59e0b;box-shadow:0 2px 6px rgba(0,0,0,.4);left:0;transition:left 1s cubic-bezier(.16,1,.3,1)}
+  .meter-wrap{margin-top:20px;position:relative}
+  .meter-note{color:rgba(252,211,77,.9);font-size:12px;font-weight:600;margin-top:8px;text-align:center}
+  .callout{padding:14px 16px;border:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.05)}
+  .callout .row{display:flex;align-items:flex-start;gap:12px}
+  .callout .t1{color:#fff;font-weight:700;font-size:14px}
+  .callout .t2{color:rgba(255,255,255,.5);font-size:13px;display:flex;align-items:center;gap:6px;margin-top:6px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .stat-card{border-radius:16px;background:var(--card);border:1px solid var(--line);padding:12px 14px;text-align:center}
+  .stat-card .v{font-weight:900;font-size:24px}
+  .stat-card .v.sm{font-size:18px}
+  .stat-card .l{color:rgba(255,255,255,.55);font-size:12px;font-weight:600;margin-top:2px}
+  .stat-card .s{color:rgba(255,255,255,.3);font-size:10px;margin-top:2px}
+  .amber{color:#fbbf24}.green{color:var(--brand)}.white{color:#fff}
+  .tier-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .tier-head .l{color:#fff;font-weight:700;font-size:14px}
+  .tier-head .l b{color:var(--brand)}
+  .tier-head .r{color:rgba(255,255,255,.45);font-size:12px;font-weight:600}
+  .tier-bar{height:10px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+  .tier-bar .f{height:100%;border-radius:99px;background:linear-gradient(to right,var(--brand-dim),var(--brand));width:0;transition:width 1s cubic-bezier(.16,1,.3,1)}
+  .tier-desc{color:rgba(255,255,255,.4);font-size:12px;margin-top:10px;line-height:1.5}
+  .tier-desc b{color:#fff;font-weight:600}
+  .lb-cap{color:rgba(255,255,255,.45);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+  .lb-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:12px}
+  .lb-row.me{background:rgba(31,214,95,.1);border:1px solid rgba(31,214,95,.25)}
+  .lb-left{display:flex;align-items:center;gap:12px}
+  .lb-rank{font-size:13px;font-weight:700;color:rgba(255,255,255,.4)}
+  .lb-row.me .lb-rank{color:var(--brand)}
+  .lb-name{font-size:14px;font-weight:600;color:rgba(255,255,255,.6)}
+  .lb-row.me .lb-name{color:#fff}
+  .lb-earn{font-size:13px;font-weight:700;color:rgba(255,255,255,.45)}
+  .lb-row.me .lb-earn{color:var(--brand)}
+
+  /* ---------- animations ---------- */
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes toastIn{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  .spin-pulse{animation:pulse 1.4s ease-in-out infinite}
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div class="wrap">
+  <div class="frame">
+    <div class="screen">
+      <div class="notch"></div>
 
-  <script type="text/babel" data-presets="react">
-    const { useState, useEffect } = React;
-
-    /* ---------- Tiny inline icons (no external deps) ---------- */
-    const Icon = ({ d, className = "w-5 h-5", stroke = 2, fill = "none" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
-           strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
-    );
-    const HomeIcon = (p) => <Icon {...p} d={<><path d="M3 11l9-8 9 8" /><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" /></>} />;
-    const TrophyIcon = (p) => <Icon {...p} d={<><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z" /><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3" /></>} />;
-    const BoltIcon = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />} />;
-    const ClockIcon = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>} />;
-    const PinIcon = (p) => <Icon {...p} d={<><path d="M12 21s-7-5.2-7-11a7 7 0 0114 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>} />;
-    const StoreIcon = (p) => <Icon {...p} d={<><path d="M3 9l1.5-5h15L21 9M4 9v10a1 1 0 001 1h14a1 1 0 001-1V9M4 9h16" /></>} />;
-    const RouteIcon = (p) => <Icon {...p} d={<><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M8.5 6H15a3 3 0 010 6H9a3 3 0 000 6h6.5" /></>} />;
-    const WarnIcon = (p) => <Icon {...p} d={<><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.6L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z" /></>} />;
-    const CheckCircle = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></>} />;
-    const XIcon = (p) => <Icon {...p} d={<><path d="M18 6L6 18M6 6l12 12" /></>} />;
-    const TrendDown = (p) => <Icon {...p} d={<><path d="M22 17l-8.5-8.5-4 4L2 5" /><path d="M16 17h6v-6" /></>} />;
-    const StarIcon = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.6 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" />} />;
-
-    /* ---------- Phone status bar ---------- */
-    function StatusBar() {
-      const [time, setTime] = useState(() => {
-        const d = new Date();
-        return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-      });
-      useEffect(() => {
-        const t = setInterval(() => {
-          const d = new Date();
-          setTime(d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'));
-        }, 10000);
-        return () => clearInterval(t);
-      }, []);
-      return (
-        <div className="flex items-center justify-between px-6 pt-3 pb-1 text-white text-[13px] font-semibold select-none">
-          <span className="tracking-wide">{time}</span>
-          <div className="flex items-center gap-1.5">
-            {/* signal */}
-            <svg className="w-4 h-3.5" viewBox="0 0 18 14" fill="currentColor"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="8" rx="1"/><rect x="10" y="3" width="3" height="11" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/></svg>
-            {/* wifi */}
-            <svg className="w-4 h-3.5" viewBox="0 0 18 14" fill="currentColor"><path d="M9 13.5l2.2-2.7a3 3 0 00-4.4 0L9 13.5z"/><path d="M3.4 6.8a8 8 0 0111.2 0l-1.5 1.6a5.8 5.8 0 00-8.2 0L3.4 6.8z" opacity=".95"/><path d="M.8 4.2a11.7 11.7 0 0116.4 0l-1.5 1.6a9.5 9.5 0 00-13.4 0L.8 4.2z" opacity=".9"/></svg>
-            {/* battery */}
-            <div className="flex items-center gap-0.5">
-              <div className="w-6 h-3 rounded-[3px] border border-white/80 p-[1.5px]"><div className="h-full bg-white rounded-[1px]" style={{width:'78%'}}></div></div>
-              <div className="w-[2px] h-1.5 bg-white/80 rounded-full"></div>
-            </div>
-          </div>
+      <!-- status bar -->
+      <div class="statusbar">
+        <span id="clock">09:41</span>
+        <div class="icons">
+          <svg width="16" height="14" viewBox="0 0 18 14" fill="#fff"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="8" rx="1"/><rect x="10" y="3" width="3" height="11" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/></svg>
+          <svg width="16" height="14" viewBox="0 0 18 14" fill="#fff"><path d="M9 13.5l2.2-2.7a3 3 0 00-4.4 0L9 13.5z"/><path d="M3.4 6.8a8 8 0 0111.2 0l-1.5 1.6a5.8 5.8 0 00-8.2 0L3.4 6.8z" opacity=".95"/><path d="M.8 4.2a11.7 11.7 0 0116.4 0l-1.5 1.6a9.5 9.5 0 00-13.4 0L.8 4.2z" opacity=".9"/></svg>
+          <div class="batt"><div class="shell"><div class="lvl"></div></div><div class="tip"></div></div>
         </div>
-      );
-    }
-
-    /* ---------- Brand logo mark (fictional) ---------- */
-    function Logo() {
-      return (
-        <div className="flex items-center gap-2.5">
-          <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-brand to-brandDim flex items-center justify-center shadow-lg shadow-brand/30">
-            <BoltIcon className="w-5 h-5 text-ink" />
-          </div>
-          <div className="leading-none">
-            <div className="text-white font-extrabold text-lg tracking-tight">Rider<span className="text-brand">Hub</span></div>
-            <div className="text-[10px] text-white/40 font-medium tracking-wider uppercase mt-0.5">Driver</div>
-          </div>
-        </div>
-      );
-    }
-
-    /* ---------- Online status pill ---------- */
-    function OnlinePill() {
-      return (
-        <div className="flex items-center gap-2 bg-brand/10 border border-brand/30 rounded-full pl-2.5 pr-3.5 py-1.5">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-brand animate-pulseRing"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand"></span>
-          </span>
-          <span className="text-brand text-[13px] font-bold tracking-wide">Online</span>
-        </div>
-      );
-    }
-
-    /* ---------- Section card wrapper ---------- */
-    const Card = ({ children, className = "" }) => (
-      <div className={"rounded-2xl bg-white/[0.04] border border-white/[0.07] " + className}>{children}</div>
-    );
-
-    const DetailRow = ({ icon, label, value, valueClass = "text-white" }) => (
-      <div className="flex items-center justify-between py-2">
-        <div className="flex items-center gap-2.5 text-white/55">
-          {icon}
-          <span className="text-[13px] font-medium">{label}</span>
-        </div>
-        <span className={"text-[14px] font-semibold " + valueClass}>{value}</span>
       </div>
-    );
 
-    /* ================= DASHBOARD ================= */
-    function Dashboard({ pushToast }) {
-      const [orderState, setOrderState] = useState('open'); // open | accepted | rejected
-      const [showReject, setShowReject] = useState(false);
-      const [showComplete, setShowComplete] = useState(false);
-      const [currentDone, setCurrentDone] = useState(false);
-
-      // current-order countdown for stress effect
-      const [secs, setSecs] = useState(4 * 60);
-      useEffect(() => {
-        if (currentDone) return;
-        const t = setInterval(() => setSecs((s) => (s > 0 ? s - 1 : 0)), 1000);
-        return () => clearInterval(t);
-      }, [currentDone]);
-      const mm = Math.floor(secs / 60), ss = (secs % 60).toString().padStart(2, '0');
-      const urgent = secs <= 120;
-
-      return (
-        <div className="px-4 pb-4 space-y-3.5">
-          {/* New Order Request */}
-          {orderState === 'open' && (
-            <Card className="overflow-hidden animate-fadeIn">
-              <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 bg-brand/[0.07] border-b border-white/[0.06]">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-brand animate-pulseRing"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
-                  </span>
-                  <span className="text-white font-bold text-[15px]">New Order Request</span>
-                </div>
-                <span className="text-[11px] font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded-full">Auto-expires 0:18</span>
-              </div>
-              <div className="px-4 py-3">
-                <div className="flex items-baseline justify-between mb-1">
-                  <div>
-                    <div className="text-white font-extrabold text-[17px] leading-tight">Kowloon Noodle House</div>
-                    <div className="text-white/45 text-[13px] mt-0.5 flex items-center gap-1.5"><PinIcon className="w-3.5 h-3.5" />Drop-off · Sai Ying Pun</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-brand font-extrabold text-2xl leading-none">HK$31</div>
-                    <div className="text-white/40 text-[11px] mt-1">est. pay</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <div className="rounded-xl bg-white/[0.04] px-3 py-2 flex items-center gap-2">
-                    <RouteIcon className="w-4 h-4 text-brand" />
-                    <div><div className="text-white font-bold text-[14px]">2.4 km</div><div className="text-white/40 text-[10px]">distance</div></div>
-                  </div>
-                  <div className="rounded-xl bg-white/[0.04] px-3 py-2 flex items-center gap-2">
-                    <ClockIcon className="w-4 h-4 text-brand" />
-                    <div><div className="text-white font-bold text-[14px]">14 min</div><div className="text-white/40 text-[10px]">est. time</div></div>
-                  </div>
-                </div>
-                <div className="flex gap-2.5 mt-3.5">
-                  <button onClick={() => setShowReject(true)}
-                    className="flex-1 py-3 rounded-xl bg-white/[0.06] text-white/70 font-bold text-[15px] active:scale-[0.97] transition-transform border border-white/[0.08]">
-                    Reject
-                  </button>
-                  <button onClick={() => { setOrderState('accepted'); pushToast('Order accepted — pickup added to your route'); }}
-                    className="flex-[1.6] py-3 rounded-xl bg-brand text-ink font-extrabold text-[15px] active:scale-[0.97] transition-transform shadow-lg shadow-brand/25">
-                    Accept
-                  </button>
-                </div>
-              </div>
-            </Card>
-          )}
-          {orderState === 'accepted' && (
-            <Card className="px-4 py-3 flex items-center gap-3 animate-fadeIn">
-              <CheckCircle className="w-6 h-6 text-brand" />
-              <div className="text-white/80 text-[14px] font-medium">Order accepted. <span className="text-white/40">Added to your active route.</span></div>
-            </Card>
-          )}
-          {orderState === 'rejected' && (
-            <Card className="px-4 py-3 flex items-center gap-3 animate-fadeIn">
-              <XIcon className="w-5 h-5 text-white/40" />
-              <div className="text-white/55 text-[14px] font-medium">Order rejected. <span className="text-amber-400/80">Ranking impact applied.</span></div>
-            </Card>
-          )}
-
-          {/* Earnings */}
-          <Card className="overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand/[0.10] via-transparent to-transparent pointer-events-none"></div>
-            <div className="px-5 pt-4 pb-4 relative">
-              <div className="flex items-center justify-between">
-                <span className="text-white/55 text-[13px] font-semibold uppercase tracking-wide">Today's Earnings</span>
-                <span className="text-[11px] font-semibold text-brand bg-brand/10 px-2 py-1 rounded-full flex items-center gap-1"><BoltIcon className="w-3 h-3"/>+18% vs avg</span>
-              </div>
-              <div className="flex items-end gap-1 mt-1">
-                <span className="text-white/60 font-bold text-2xl mb-1.5">HK$</span>
-                <span className="text-white font-black text-6xl leading-none tracking-tight">287</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="rounded-xl bg-black/20 px-3.5 py-2.5">
-                  <div className="text-white/45 text-[11px] font-medium flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5"/>Active today</div>
-                  <div className="text-white font-bold text-[16px] mt-1">9.5 hours</div>
-                </div>
-                <div className="rounded-xl bg-black/20 px-3.5 py-2.5">
-                  <div className="text-white/45 text-[11px] font-medium flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5"/>Completed</div>
-                  <div className="text-white font-bold text-[16px] mt-1">12 deliveries</div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Current Order */}
-          <Card className="overflow-hidden">
-            <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-white/[0.06]">
-              <span className="text-white font-bold text-[15px]">Current Order</span>
-              {!currentDone
-                ? <span className="text-[11px] font-bold text-brand bg-brand/10 px-2.5 py-1 rounded-full">Delivering now</span>
-                : <span className="text-[11px] font-bold text-white/40 bg-white/5 px-2.5 py-1 rounded-full">Completed</span>}
-            </div>
-            <div className="px-4 py-3">
-              {/* route line */}
-              <div className="flex gap-3">
-                <div className="flex flex-col items-center pt-1">
-                  <div className="w-2.5 h-2.5 rounded-full bg-brand"></div>
-                  <div className="w-0.5 flex-1 bg-gradient-to-b from-brand/60 to-white/15 my-1"></div>
-                  <div className="w-2.5 h-2.5 rounded-full border-2 border-white/40"></div>
-                </div>
-                <div className="flex-1 space-y-3">
-                  <div>
-                    <div className="text-white/40 text-[11px] font-medium">Pickup</div>
-                    <div className="text-white font-semibold text-[14px] flex items-center gap-1.5"><StoreIcon className="w-4 h-4 text-white/40"/>Central Kitchen</div>
-                  </div>
-                  <div>
-                    <div className="text-white/40 text-[11px] font-medium">Drop-off</div>
-                    <div className="text-white font-semibold text-[14px] flex items-center gap-1.5"><PinIcon className="w-4 h-4 text-white/40"/>Mid-Levels</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* urgent timer */}
-              {!currentDone && (
-                <div className={"mt-3 rounded-xl px-3.5 py-2.5 flex items-center justify-between border " +
-                  (urgent ? "bg-red-500/10 border-red-500/40" : "bg-amber-500/10 border-amber-500/35")}>
-                  <div className="flex items-center gap-2">
-                    <WarnIcon className={"w-5 h-5 " + (urgent ? "text-red-400 animate-pulseRing" : "text-amber-400")} />
-                    <span className={"text-[13px] font-bold " + (urgent ? "text-red-300" : "text-amber-300")}>Deliver within 4 minutes</span>
-                  </div>
-                  <span className={"font-black text-[18px] tabular-nums " + (urgent ? "text-red-400" : "text-amber-400")}>{mm}:{ss}</span>
-                </div>
-              )}
-
-              <button
-                disabled={currentDone}
-                onClick={() => setShowComplete(true)}
-                className={"w-full mt-3 py-3 rounded-xl font-extrabold text-[15px] active:scale-[0.98] transition-transform " +
-                  (currentDone ? "bg-white/[0.05] text-white/30" : "bg-brand text-ink shadow-lg shadow-brand/25")}>
-                {currentDone ? "Order completed ✓" : "Completed"}
-              </button>
-            </div>
-          </Card>
-
-          <div className="text-center text-white/25 text-[11px] pt-1 pb-2">RiderHub for Drivers · v3.1.0 · This is a fictional demo app</div>
-
-          {/* ===== Reject modal ===== */}
-          {showReject && (
-            <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setShowReject(false)}>
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fadeIn"></div>
-              <div onClick={(e)=>e.stopPropagation()} className="relative w-full max-w-[420px] mx-auto bg-[#15110f] border-t border-x border-red-500/30 rounded-t-3xl p-5 pb-7 animate-slideUp">
-                <div className="w-10 h-1 bg-white/15 rounded-full mx-auto mb-4"></div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mb-3">
-                    <WarnIcon className="w-7 h-7 text-red-400" />
-                  </div>
-                  <div className="text-white font-extrabold text-xl">Are you sure?</div>
-                  <div className="text-red-300/90 font-bold text-[15px] mt-2 flex items-center gap-1.5">
-                    <TrendDown className="w-4 h-4" /> You will lose 16 ranking places.
-                  </div>
-                  <div className="text-white/45 text-[13px] mt-2 leading-relaxed">
-                    Rejecting orders lowers your acceptance rate and may reduce future order priority in your zone.
-                  </div>
-                </div>
-                <div className="flex gap-2.5 mt-5">
-                  <button onClick={() => { setShowReject(false); setOrderState('rejected'); pushToast('Order rejected.'); }}
-                    className="flex-1 py-3 rounded-xl bg-red-500/15 text-red-300 font-bold text-[15px] border border-red-500/30 active:scale-[0.97] transition-transform">
-                    Reject Anyway
-                  </button>
-                  <button onClick={() => setShowReject(false)}
-                    className="flex-[1.4] py-3 rounded-xl bg-brand text-ink font-extrabold text-[15px] active:scale-[0.97] transition-transform shadow-lg shadow-brand/25">
-                    Nevermind
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Completed modal ===== */}
-          {showComplete && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={() => { setShowComplete(false); setCurrentDone(true); }}>
-              <div className="absolute inset-0 bg-black/75 backdrop-blur-sm animate-fadeIn"></div>
-              <div onClick={(e)=>e.stopPropagation()} className="relative w-full max-w-[340px] bg-gradient-to-b from-[#0e1a12] to-[#0b0f0c] border border-brand/30 rounded-3xl p-6 text-center animate-popIn shadow-2xl shadow-brand/20">
-                <div className="w-16 h-16 rounded-full bg-brand/15 border border-brand/40 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-9 h-9 text-brand" stroke={2.2} />
-                </div>
-                <div className="text-white font-extrabold text-xl">Order Completed</div>
-                <div className="text-white/50 text-[13px] mt-1">You earned from this order</div>
-                <div className="flex items-end justify-center gap-1 mt-3">
-                  <span className="text-white/60 font-bold text-xl mb-1">HK$</span>
-                  <span className="text-brand font-black text-5xl leading-none">31</span>
-                </div>
-                <div className="mt-3 text-[12px] text-brand/80 font-semibold bg-brand/10 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5">
-                  <BoltIcon className="w-3.5 h-3.5" /> Added to today's earnings
-                </div>
-                <button onClick={() => { setShowComplete(false); setCurrentDone(true); pushToast('Nice work! Keep your streak going.'); }}
-                  className="w-full mt-5 py-3 rounded-xl bg-brand text-ink font-extrabold text-[15px] active:scale-[0.98] transition-transform">
-                  Back to Dashboard
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    /* ================= RANKINGS ================= */
-    function Rankings() {
-      const rank = 3755, total = 5890;
-      const pct = (1 - rank / total) * 100; // higher = better; ~36%
-      const [fill, setFill] = useState(0);
-      useEffect(() => { const t = setTimeout(() => setFill(pct), 150); return () => clearTimeout(t); }, []);
-
-      const Stat = ({ label, value, sub, tone }) => (
-        <div className="rounded-2xl bg-white/[0.04] border border-white/[0.07] px-3.5 py-3 text-center">
-          <div className={"font-black text-2xl " + tone}>{value}</div>
-          <div className="text-white/55 text-[12px] font-semibold mt-0.5">{label}</div>
-          {sub && <div className="text-white/30 text-[10px] mt-0.5">{sub}</div>}
-        </div>
-      );
-
-      return (
-        <div className="px-4 pb-4 space-y-3.5">
-          {/* Hero rank card */}
-          <Card className="overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.07] via-transparent to-transparent pointer-events-none"></div>
-            <div className="px-5 pt-5 pb-5 relative">
-              <div className="flex items-center gap-2 text-white/55 text-[13px] font-semibold uppercase tracking-wide">
-                <TrophyIcon className="w-4 h-4 text-amber-400" /> Driver Ranking
-              </div>
-              <div className="flex items-end gap-2 mt-2">
-                <span className="text-white font-black text-5xl leading-none">#3755</span>
-              </div>
-              <div className="text-white/50 text-[14px] mt-2 font-medium">out of <span className="text-white font-bold">5,890</span> drivers in Hong Kong Island</div>
-
-              {/* ranking meter */}
-              <div className="mt-5">
-                <div className="flex justify-between text-[10px] font-semibold text-white/35 mb-1.5">
-                  <span>Bottom</span><span>Lower-mid</span><span>Top</span>
-                </div>
-                <div className="relative h-3 rounded-full bg-white/[0.06] overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 via-amber-500/30 to-brand/30"></div>
-                  <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000 ease-out relative"
-                       style={{ width: fill + '%' }}>
-                  </div>
-                  <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-amber-500 shadow transition-all duration-1000 ease-out"
-                       style={{ left: 'calc(' + fill + '% - 8px)' }}></div>
-                </div>
-                <div className="text-amber-300/90 text-[12px] font-semibold mt-2 text-center">You're in the lower-middle range</div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Pressure callout */}
-          <Card className="px-4 py-3.5 border-amber-500/20 bg-amber-500/[0.05]">
-            <div className="flex items-start gap-3">
-              <BoltIcon className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
-              <div className="space-y-1.5">
-                <div className="text-white font-bold text-[14px]">Accept more orders to improve your ranking.</div>
-                <div className="text-white/50 text-[13px] flex items-center gap-1.5"><TrendDown className="w-3.5 h-3.5 text-red-400" /> Rejecting orders may lower your ranking.</div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <Stat label="Acceptance" value="78%" sub="last 30 days" tone="text-amber-400" />
-            <Stat label="On-time" value="91%" sub="delivery rate" tone="text-brand" />
-            <Stat label="Tier" value="Standard" sub="" tone="text-white text-[18px] flex items-center justify-center h-8" />
+      <!-- header -->
+      <div class="header">
+        <div class="logo">
+          <div class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="#0a0e0c"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+          <div>
+            <div class="name">Rider<b>Hub</b></div>
+            <div class="sub">Driver</div>
           </div>
-
-          {/* Next tier progress */}
-          <Card className="px-4 py-4">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-white font-bold text-[14px]">Next tier: <span className="text-brand">Gold</span></span>
-              <span className="text-white/45 text-[12px] font-semibold">85% acceptance needed</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-brandDim to-brand transition-all duration-1000" style={{ width: fill ? '78%' : '0%' }}></div>
-            </div>
-            <div className="text-white/40 text-[12px] mt-2.5 leading-relaxed">
-              You're <span className="text-white font-semibold">7%</span> away from Gold. Gold drivers get priority on high-value orders and lower cancellation penalties.
-            </div>
-          </Card>
-
-          {/* mini leaderboard */}
-          <Card className="px-4 py-3">
-            <div className="text-white/45 text-[11px] font-semibold uppercase tracking-wide mb-2">Your zone leaderboard</div>
-            {[
-              { r: '#3,753', n: 'Rider 8841', e: 'HK$402', me: false },
-              { r: '#3,754', n: 'Rider 1207', e: 'HK$311', me: false },
-              { r: '#3,755', n: 'You', e: 'HK$287', me: true },
-              { r: '#3,756', n: 'Rider 4490', e: 'HK$263', me: false },
-            ].map((row, i) => (
-              <div key={i} className={"flex items-center justify-between py-2 px-2.5 rounded-xl " + (row.me ? "bg-brand/10 border border-brand/25" : "")}>
-                <div className="flex items-center gap-3">
-                  <span className={"text-[13px] font-bold tabular-nums " + (row.me ? "text-brand" : "text-white/40")}>{row.r}</span>
-                  <span className={"text-[14px] font-semibold " + (row.me ? "text-white" : "text-white/60")}>{row.n}</span>
-                </div>
-                <span className={"text-[13px] font-bold " + (row.me ? "text-brand" : "text-white/45")}>{row.e}</span>
-              </div>
-            ))}
-          </Card>
-          <div className="text-center text-white/25 text-[11px] pt-1 pb-2">Rankings update hourly · Fictional demo data</div>
         </div>
-      );
-    }
+        <div class="pill"><span class="dot"><span class="ping"></span><span class="core"></span></span><span>Online</span></div>
+      </div>
 
-    /* ================= APP SHELL ================= */
-    function App() {
-      const [tab, setTab] = useState('dashboard');
-      const [toast, setToast] = useState(null);
-      const pushToast = (msg) => {
-        setToast(msg);
-        setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600);
-      };
-
-      const NavBtn = ({ id, label, Ico }) => {
-        const active = tab === id;
-        return (
-          <button onClick={() => setTab(id)} className="flex-1 flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform">
-            <Ico className={"w-6 h-6 " + (active ? "text-brand" : "text-white/35")} stroke={active ? 2.4 : 2} />
-            <span className={"text-[11px] font-semibold " + (active ? "text-brand" : "text-white/35")}>{label}</span>
-          </button>
-        );
-      };
-
-      return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-8" style={{background:'radial-gradient(circle at 50% 0%, #0c1410 0%, #050706 60%)'}}>
-          <div className="relative w-full max-w-[400px]">
-            {/* phone frame */}
-            <div className="relative rounded-[2.6rem] bg-black p-2.5 phone-shadow border border-white/[0.06]">
-              <div className="relative rounded-[2.1rem] overflow-hidden bg-ink" style={{height:'min(840px, 88vh)'}}>
-                {/* notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-30"></div>
-
-                <StatusBar />
-
-                {/* sticky header */}
-                <div className="px-4 pt-1.5 pb-3 flex items-center justify-between bg-ink/95 backdrop-blur z-20 relative border-b border-white/[0.05]">
-                  <Logo />
-                  <OnlinePill />
+      <!-- scroll content -->
+      <div class="scroll">
+        <!-- ============ DASHBOARD ============ -->
+        <div class="page" id="page-dashboard">
+          <!-- new order request -->
+          <div class="card" id="orderOpen">
+            <div class="card-head req-head">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="dot" style="position:relative;width:8px;height:8px"><span class="ping" style="position:absolute;inset:0;border-radius:99px;background:var(--brand);animation:pulse 1.4s ease-in-out infinite"></span><span style="position:absolute;inset:0;border-radius:99px;background:var(--brand)"></span></span>
+                <span class="card-title">New Order Request</span>
+              </div>
+              <span class="badge green">Auto-expires 0:18</span>
+            </div>
+            <div class="req-body">
+              <div class="req-top">
+                <div>
+                  <div class="req-rest">Kowloon Noodle House</div>
+                  <div class="req-drop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.2-7-11a7 7 0 0114 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Drop-off · Sai Ying Pun</div>
                 </div>
-
-                {/* scroll area */}
-                <div className="overflow-y-auto no-scrollbar pt-3.5" style={{height:'calc(100% - 152px)'}}>
-                  {tab === 'dashboard' ? <Dashboard pushToast={pushToast} /> : <Rankings />}
+                <div class="req-pay"><div class="amt">HK$31</div><div class="lbl">est. pay</div></div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat-mini">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 010 6H9a3 3 0 000 6h6.5"/></svg>
+                  <div><div class="v">2.4 km</div><div class="l">distance</div></div>
                 </div>
-
-                {/* toast */}
-                {toast && (
-                  <div className="absolute bottom-[88px] left-1/2 -translate-x-1/2 z-40 animate-toastIn w-max max-w-[88%]">
-                    <div className="bg-white text-ink font-bold text-[13px] px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-brandDim" /> {toast}
-                    </div>
-                  </div>
-                )}
-
-                {/* bottom nav */}
-                <div className="absolute bottom-0 left-0 right-0 bg-ink/95 backdrop-blur border-t border-white/[0.07] px-6 pt-2.5 pb-5 flex z-30">
-                  <NavBtn id="dashboard" label="Dashboard" Ico={HomeIcon} />
-                  <NavBtn id="rankings" label="Rankings" Ico={TrophyIcon} />
+                <div class="stat-mini">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <div><div class="v">14 min</div><div class="l">est. time</div></div>
                 </div>
-                {/* home indicator */}
-                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-white/25 rounded-full z-40"></div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-ghost flex1" onclick="openReject()">Reject</button>
+                <button class="btn btn-primary flex16" onclick="acceptOrder()">Accept</button>
               </div>
             </div>
           </div>
-        </div>
-      );
-    }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+          <div class="card inline-msg hidden" id="orderAccepted">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
+            <div style="color:rgba(255,255,255,.8)">Order accepted. <span style="color:rgba(255,255,255,.4)">Added to your active route.</span></div>
+          </div>
+
+          <div class="card inline-msg hidden" id="orderRejected">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <div style="color:rgba(255,255,255,.55)">Order rejected. <span style="color:rgba(251,191,36,.8)">Ranking impact applied.</span></div>
+          </div>
+
+          <!-- earnings -->
+          <div class="card earn">
+            <div class="earn-in">
+              <div class="earn-row">
+                <span class="earn-cap">Today's Earnings</span>
+                <span class="badge green" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--brand)"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>+18% vs avg</span>
+              </div>
+              <div class="earn-big"><span class="cur">HK$</span><span class="num">287</span></div>
+              <div class="earn-sub">
+                <div class="earn-box">
+                  <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Active today</div>
+                  <div class="b">9.5 hours</div>
+                </div>
+                <div class="earn-box">
+                  <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>Completed</div>
+                  <div class="b">12 deliveries</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- current order -->
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">Current Order</span>
+              <span class="badge green" id="curBadge">Delivering now</span>
+            </div>
+            <div class="req-body">
+              <div class="route">
+                <div class="line"><div class="d1"></div><div class="bar"></div><div class="d2"></div></div>
+                <div class="info">
+                  <div>
+                    <div class="lbl">Pickup</div>
+                    <div class="val"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M4 9v10a1 1 0 001 1h14a1 1 0 001-1V9M4 9h16"/></svg>Central Kitchen</div>
+                  </div>
+                  <div>
+                    <div class="lbl">Drop-off</div>
+                    <div class="val"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.2-7-11a7 7 0 0114 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Mid-Levels</div>
+                  </div>
+                </div>
+              </div>
+              <div class="timer amber" id="timer">
+                <div class="left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.6L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/></svg>Deliver within 4 minutes</div>
+                <span class="clock tabular" id="orderClock">4:00</span>
+              </div>
+              <button class="btn btn-primary" id="completeBtn" style="width:100%;margin-top:12px" onclick="openComplete()">Completed</button>
+            </div>
+          </div>
+
+          <div class="footer-note">RiderHub for Drivers · v3.1.0 · This is a fictional demo app</div>
+        </div>
+
+        <!-- ============ RANKINGS ============ -->
+        <div class="page hidden" id="page-rankings">
+          <div class="card rank-hero">
+            <div class="rank-in">
+              <div class="rank-cap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg>Driver Ranking</div>
+              <div class="rank-num">#3755</div>
+              <div class="rank-of">out of <b>5,890</b> drivers in Hong Kong Island</div>
+              <div class="meter-wrap">
+                <div class="meter-labels"><span>Bottom</span><span>Lower-mid</span><span>Top</span></div>
+                <div class="meter"><div class="grad"></div><div class="fill" id="meterFill"></div><div class="meter-knob" id="meterKnob"></div></div>
+                <div class="meter-note">You're in the lower-middle range</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card callout">
+            <div class="row">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" style="flex-shrink:0;margin-top:2px"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+              <div>
+                <div class="t1">Accept more orders to improve your ranking.</div>
+                <div class="t2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17l-8.5-8.5-4 4L2 5"/><path d="M16 17h6v-6"/></svg>Rejecting orders may lower your ranking.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="three">
+            <div class="stat-card"><div class="v amber">78%</div><div class="l">Acceptance</div><div class="s">last 30 days</div></div>
+            <div class="stat-card"><div class="v green">91%</div><div class="l">On-time</div><div class="s">delivery rate</div></div>
+            <div class="stat-card"><div class="v sm white" style="margin-top:8px">Standard</div><div class="l">Tier</div><div class="s">&nbsp;</div></div>
+          </div>
+
+          <div class="card" style="padding:16px">
+            <div class="tier-head"><span class="l">Next tier: <b>Gold</b></span><span class="r">85% acceptance needed</span></div>
+            <div class="tier-bar"><div class="f" id="tierFill"></div></div>
+            <div class="tier-desc">You're <b>7%</b> away from Gold. Gold drivers get priority on high-value orders and lower cancellation penalties.</div>
+          </div>
+
+          <div class="card" style="padding:12px 16px">
+            <div class="lb-cap">Your zone leaderboard</div>
+            <div class="lb-row"><div class="lb-left"><span class="lb-rank tabular">#3,753</span><span class="lb-name">Rider 8841</span></div><span class="lb-earn">HK$402</span></div>
+            <div class="lb-row"><div class="lb-left"><span class="lb-rank tabular">#3,754</span><span class="lb-name">Rider 1207</span></div><span class="lb-earn">HK$311</span></div>
+            <div class="lb-row me"><div class="lb-left"><span class="lb-rank tabular">#3,755</span><span class="lb-name">You</span></div><span class="lb-earn">HK$287</span></div>
+            <div class="lb-row"><div class="lb-left"><span class="lb-rank tabular">#3,756</span><span class="lb-name">Rider 4490</span></div><span class="lb-earn">HK$263</span></div>
+          </div>
+
+          <div class="footer-note">Rankings update hourly · Fictional demo data</div>
+        </div>
+      </div>
+
+      <!-- toast -->
+      <div class="toast hidden" id="toast"><div class="inner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg><span id="toastMsg"></span></div></div>
+
+      <!-- bottom nav -->
+      <div class="nav">
+        <button class="active" id="nav-dashboard" onclick="switchTab('dashboard')">
+          <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
+          <span class="lab">Dashboard</span>
+        </button>
+        <button id="nav-rankings" onclick="switchTab('rankings')">
+          <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg>
+          <span class="lab">Rankings</span>
+        </button>
+      </div>
+
+      <div class="home-ind"></div>
+
+      <!-- ===== Reject modal ===== -->
+      <div class="overlay sheet fade hidden" id="rejectModal" onclick="closeReject(event)">
+        <div class="sheet-card" onclick="event.stopPropagation()">
+          <div class="grab"></div>
+          <div class="col-center">
+            <div class="sheet-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.6L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/></svg></div>
+            <div class="sheet-title">Are you sure?</div>
+            <div class="sheet-warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17l-8.5-8.5-4 4L2 5"/><path d="M16 17h6v-6"/></svg>You will lose 16 ranking places.</div>
+            <div class="sheet-desc">Rejecting orders lowers your acceptance rate and may reduce future order priority in your zone.</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-danger flex1" onclick="rejectAnyway()">Reject Anyway</button>
+            <button class="btn btn-primary flex14" onclick="closeReject()">Nevermind</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Completed modal ===== -->
+      <div class="overlay center fade hidden" id="completeModal" onclick="closeComplete(event)">
+        <div class="pop-card" onclick="event.stopPropagation()">
+          <div class="pop-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></div>
+          <div class="pop-title">Order Completed</div>
+          <div class="pop-sub">You earned from this order</div>
+          <div class="pop-amt"><span class="cur">HK$</span><span class="num">31</span></div>
+          <div class="pop-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--brand)"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Added to today's earnings</div>
+          <button class="btn btn-primary" style="width:100%;margin-top:20px" onclick="closeComplete()">Back to Dashboard</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ---------- live clock ---------- */
+  function pad(n){return n.toString().padStart(2,'0')}
+  function tickClock(){
+    var d=new Date();
+    document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+  tickClock(); setInterval(tickClock,10000);
+
+  /* ---------- tab switching ---------- */
+  function switchTab(tab){
+    document.getElementById('page-dashboard').classList.toggle('hidden',tab!=='dashboard');
+    document.getElementById('page-rankings').classList.toggle('hidden',tab!=='rankings');
+    document.getElementById('nav-dashboard').classList.toggle('active',tab==='dashboard');
+    document.getElementById('nav-rankings').classList.toggle('active',tab==='rankings');
+    document.querySelector('.scroll').scrollTop=0;
+    if(tab==='rankings') animateMeters();
+  }
+
+  /* ---------- toast ---------- */
+  var toastTimer;
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    document.getElementById('toastMsg').textContent=msg;
+    t.classList.remove('hidden'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){t.classList.add('hidden')},2600);
+  }
+
+  /* ---------- new order ---------- */
+  function acceptOrder(){
+    document.getElementById('orderOpen').classList.add('hidden');
+    document.getElementById('orderRejected').classList.add('hidden');
+    document.getElementById('orderAccepted').classList.remove('hidden');
+    showToast('Order accepted — pickup added to your route');
+  }
+  function openReject(){ document.getElementById('rejectModal').classList.remove('hidden'); }
+  function closeReject(e){ if(e&&e.target!==e.currentTarget) return; document.getElementById('rejectModal').classList.add('hidden'); }
+  function rejectAnyway(){
+    document.getElementById('rejectModal').classList.add('hidden');
+    document.getElementById('orderOpen').classList.add('hidden');
+    document.getElementById('orderAccepted').classList.add('hidden');
+    document.getElementById('orderRejected').classList.remove('hidden');
+    showToast('Order rejected.');
+  }
+
+  /* ---------- current order countdown ---------- */
+  var secs=4*60, orderDone=false, countdown;
+  function renderTimer(){
+    var m=Math.floor(secs/60), s=pad(secs%60);
+    document.getElementById('orderClock').textContent=m+':'+s;
+    var t=document.getElementById('timer');
+    if(secs<=120){ t.classList.remove('amber'); t.classList.add('red'); }
+  }
+  function startCountdown(){
+    renderTimer();
+    countdown=setInterval(function(){
+      if(orderDone){clearInterval(countdown);return;}
+      if(secs>0){secs--;renderTimer();}
+    },1000);
+  }
+  startCountdown();
+
+  function openComplete(){ if(orderDone) return; document.getElementById('completeModal').classList.remove('hidden'); }
+  function closeComplete(e){
+    if(e&&e.target!==e.currentTarget) return;
+    document.getElementById('completeModal').classList.add('hidden');
+    orderDone=true;
+    document.getElementById('timer').style.display='none';
+    var b=document.getElementById('completeBtn');
+    b.textContent='Order completed ✓';
+    b.classList.remove('btn-primary'); b.classList.add('btn-done-off');
+    b.setAttribute('disabled','');
+    document.getElementById('curBadge').textContent='Completed';
+    document.getElementById('curBadge').classList.remove('green'); document.getElementById('curBadge').classList.add('gray');
+    showToast('Nice work! Keep your streak going.');
+  }
+
+  /* ---------- rankings meters ---------- */
+  var rank=3755,total=5890;
+  var pct=(1-rank/total)*100; // ~36%
+  var metersAnimated=false;
+  function animateMeters(){
+    if(metersAnimated) return; metersAnimated=true;
+    setTimeout(function(){
+      document.getElementById('meterFill').style.width=pct+'%';
+      document.getElementById('meterKnob').style.left='calc('+pct+'% - 8px)';
+      document.getElementById('tierFill').style.width='78%';
+    },150);
+  }
+</script>
 </body>
 </html>
